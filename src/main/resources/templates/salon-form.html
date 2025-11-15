@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Add Salon</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+<h1>Add New Salon</h1>
+<form th:action="@{/salons/save}" th:object="${salon}" method="post">
+    <label>Name:</label>
+    <input type="text" th:field="*{name}" required><br>
+    <label>Address:</label>
+    <input type="text" th:field="*{address}" required><br>
+    <label>Working Hours:</label>
+    <input type="text" th:field="*{workingHours}" placeholder="09:00 - 18:00" required><br>
+    <button type="submit">Save</button>
+</form>
+<a th:href="@{/salons}">Back</a>
+</body>
+</html>
