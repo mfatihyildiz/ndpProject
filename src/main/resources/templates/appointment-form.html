@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head><title>Add Appointment</title></head>
+<body>
+<h1>New Appointment</h1>
+<form th:action="@{/appointments/save}" method="post">
+    <label>Customer:</label>
+    <select name="customerId" required>
+        <option th:each="c : ${customers}" th:value="${c.id}" th:text="${c.fullName}"></option>
+    </select><br>
+
+    <label>Employee:</label>
+    <select name="employeeId" required>
+        <option th:each="e : ${employees}" th:value="${e.id}" th:text="${e.fullName}"></option>
+    </select><br>
+
+    <label>Service:</label>
+    <select name="serviceId" required>
+        <option th:each="s : ${services}" th:value="${s.id}" th:text="${s.name}"></option>
+    </select><br>
+
+    <label>Date/Time (yyyy-MM-ddTHH:mm):</label>
+    <input type="datetime-local" name="dateTime" required><br>
+
+    <button type="submit">Save Appointment</button>
+</form>
+
+<a th:href="@{/appointments}">Back</a>
+</body>
+</html>
