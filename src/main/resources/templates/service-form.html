@@ -17,9 +17,12 @@
     <input type="number" step="0.01" th:field="*{price}" required><br>
 
     <label>Salon:</label>
-    <select th:field="*{salon}">
-        <option th:each="salon : ${salons}" th:value="${salon}" th:text="${salon.name}"></option>
-    </select><br>
+    <select name="salonId" required>
+        <option th:each="salon : ${salons}"
+                th:value="${salon.id}"
+                th:text="${salon.name}"></option>
+    </select>
+    <br>
 
     <button type="submit">Save</button>
 </form>

@@ -9,13 +9,20 @@
 <a th:href="@{/employees/new}">Add Employee</a>
 <table border="1">
     <tr>
-        <th>ID</th><th>Name</th><th>Specialization</th><th>Salon</th><th>Actions</th>
+        <th>ID</th><th>Name</th><th>Specialization</th><th>Salon</th><th>Availability</th><th>Services</th><th>Actions</th>
     </tr>
     <tr th:each="emp : ${employees}">
         <td th:text="${emp.id}"></td>
         <td th:text="${emp.fullName}"></td>
         <td th:text="${emp.specialization}"></td>
         <td th:text="${emp.salon != null ? emp.salon.name : '—'}"></td>
+        <td th:text="${emp.availableFrom != null && emp.availableTo != null ?
+            #temporals.format(emp.availableFrom, 'HH:mm') + ' - ' + #temporals.format(emp.availableTo, 'HH:mm') : '—'}"></td>
+        <td>
+            <span th:if="${#lists.isEmpty(emp.skills)}">—</span>
+            <span th:unless="${#lists.isEmpty(emp.skills)}"
+                  th:text="${#strings.listJoin(emp.skills.?[true].![name], ', ')}"></span>
+        </td>
         <td><a th:href="@{'/employees/delete/' + ${emp.id}}">Delete</a></td>
     </tr>
 </table>

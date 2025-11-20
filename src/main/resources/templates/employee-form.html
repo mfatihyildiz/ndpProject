@@ -4,19 +4,39 @@
 <body>
 <h1>Add Employee</h1>
 <form th:action="@{/employees/save}" th:object="${employee}" method="post">
+    <label>Username:</label>
+    <input type="text" th:field="*{username}" required><br>
+
+    <label>Password:</label>
+    <input type="password" th:field="*{password}" required><br>
+
     <label>Full Name:</label>
     <input type="text" th:field="*{fullName}" required><br>
 
     <label>Specialization:</label>
     <input type="text" th:field="*{specialization}" required><br>
 
-    <label>Availability:</label>
-    <input type="text" th:field="*{availability}" required><br>
+    <label>Available From:</label>
+    <input type="time" th:field="*{availableFrom}" required><br>
+
+    <label>Available To:</label>
+    <input type="time" th:field="*{availableTo}" required><br>
 
     <label>Salon:</label>
-    <select th:field="*{salon}">
-        <option th:each="salon : ${salons}" th:value="${salon}" th:text="${salon.name}"></option>
-    </select><br>
+    <select name="salonId" required>
+        <option th:each="salon : ${salons}"
+                th:value="${salon.id}"
+                th:text="${salon.name}"></option>
+    </select>
+    <br>
+
+    <label>Services they can perform:</label>
+    <select name="serviceIds" multiple size="5">
+        <option th:each="service : ${servicesList}"
+                th:value="${service.id}"
+                th:text="${service.name + ' (' + service.duration + 'm)'}"></option>
+    </select>
+    <p><small>You can pick multiple services.</small></p>
 
     <button type="submit">Save</button>
 </form>

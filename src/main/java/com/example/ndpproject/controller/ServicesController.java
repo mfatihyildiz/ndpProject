@@ -1,5 +1,6 @@
 package com.example.ndpproject.controller;
 
+import com.example.ndpproject.entity.Salon;
 import com.example.ndpproject.entity.Services;
 import com.example.ndpproject.service.SalonService;
 import com.example.ndpproject.service.ServicesService;
@@ -35,7 +36,11 @@ public class ServicesController {
     }
 
     @PostMapping("/save")
-    public String saveService(@ModelAttribute Services services) {
+    public String saveService(@ModelAttribute Services services,
+                              @RequestParam Long salonId) {
+        Salon salon = salonService.getSalonById(salonId)
+                .orElseThrow(() -> new IllegalArgumentException("Salon not found"));
+        services.setSalon(salon);
         servicesService.saveService(services);
         return "redirect:/services";
     }

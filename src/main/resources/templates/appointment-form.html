@@ -9,15 +9,21 @@
         <option th:each="c : ${customers}" th:value="${c.id}" th:text="${c.fullName}"></option>
     </select><br>
 
-    <label>Employee:</label>
-    <select name="employeeId" required>
-        <option th:each="e : ${employees}" th:value="${e.id}" th:text="${e.fullName}"></option>
-    </select><br>
-
     <label>Service:</label>
-    <select name="serviceId" required>
+    <select name="serviceId" id="serviceSelect" required>
+        <option value="">-- Select Service --</option>
         <option th:each="s : ${services}" th:value="${s.id}" th:text="${s.name}"></option>
     </select><br>
+
+    <label>Employee:</label>
+    <select name="employeeId" id="employeeSelect" required>
+        <option th:each="e : ${employees}"
+                th:value="${e.id}"
+                th:text="${e.fullName + ' (' + e.specialization + ')'}"
+                th:attr="data-skills=${#strings.listJoin(e.skills.?[true].![id], ',')}"></option>
+    </select>
+    <p><small>Only employees able to perform the selected service remain selectable.</small></p>
+    <br>
 
     <label>Date/Time (yyyy-MM-ddTHH:mm):</label>
     <input type="datetime-local" name="dateTime" required><br>
@@ -26,5 +32,37 @@
 </form>
 
 <a th:href="@{/appointments}">Back</a>
+
+<script>
+    const serviceSelect = document.getElementById('serviceSelect');
+    const employeeSelect = document.getElementById('employeeSelect');
+
+    function filterEmployees() {
+        const targetService = serviceSelect.value;
+        const options = Array.from(employeeSelect.options);
+
+        let firstVisible = null;
+        options.forEach(option => {
+            if (!targetService) {
+                option.hidden = false;
+            } else {
+                const skills = option.dataset.skills ? option.dataset.skills.split(',') : [];
+                option.hidden = skills.length === 0 || !skills.includes(targetService);
+            }
+            if (!option.hidden && !firstVisible && option.value) {
+                firstVisible = option;
+            }
+        });
+
+        if (firstVisible) {
+            employeeSelect.value = firstVisible.value;
+        } else {
+            employeeSelect.value = '';
+        }
+    }
+
+    serviceSelect.addEventListener('change', filterEmployees);
+    filterEmployees();
+</script>
 </body>
 </html>

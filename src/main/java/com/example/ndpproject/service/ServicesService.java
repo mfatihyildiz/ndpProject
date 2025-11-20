@@ -33,5 +33,8 @@ public class ServicesService {
     public void deleteService(Long id) {
         servicesRepo.deleteById(id);
     }
-}
 
+    public List<Services> getServicesByIds(List<Long> ids) {
+        return servicesRepo.findAllById(ids);
+    }
+}

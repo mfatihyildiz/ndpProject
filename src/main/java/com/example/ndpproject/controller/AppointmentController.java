@@ -63,6 +63,10 @@ public class AppointmentController {
         Services services = servicesService.getServiceById(serviceId)
                 .orElseThrow(() -> new RuntimeException("Service not found"));
 
+        if (!employeeService.canPerformService(employeeId, serviceId)) {
+            throw new RuntimeException("Employee cannot perform the selected service!");
+        }
+
         LocalDateTime dt = LocalDateTime.parse(dateTime);
 
         if (!appointmentService.isEmployeeAvailable(employee, dt)) {
