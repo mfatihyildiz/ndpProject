@@ -28,6 +28,9 @@ public class Employee extends User {
     @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL)
     private List<Appointment> appointments;
 
+    @OneToMany(mappedBy = "employee", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<AvailabilitySlot> availabilitySlots;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(
             name = "employee_services",
@@ -38,8 +41,8 @@ public class Employee extends User {
 
     public Employee() {}
 
-    public Employee(String username, String password, Role role, String fullName, String specialization,
-                    LocalTime availableFrom, LocalTime availableTo, Salon salon) {
+    public Employee(String username, String password, Role role, String fullName,
+                    String specialization, LocalTime availableFrom, LocalTime availableTo, Salon salon) {
         super(username, password, role);
         this.fullName = fullName;
         this.specialization = specialization;
@@ -48,6 +51,7 @@ public class Employee extends User {
         this.salon = salon;
     }
 
+    // Getters and Setters
     public String getFullName() { return fullName; }
     public void setFullName(String fullName) { this.fullName = fullName; }
 
@@ -65,6 +69,9 @@ public class Employee extends User {
 
     public List<Appointment> getAppointments() { return appointments; }
     public void setAppointments(List<Appointment> appointments) { this.appointments = appointments; }
+
+    public List<AvailabilitySlot> getAvailabilitySlots() { return availabilitySlots; }
+    public void setAvailabilitySlots(List<AvailabilitySlot> availabilitySlots) { this.availabilitySlots = availabilitySlots; }
 
     public Set<Services> getSkills() { return skills; }
     public void setSkills(Set<Services> skills) { this.skills = skills; }

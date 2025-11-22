@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Availability Slots</title>
+</head>
+<body>
+<h1>Employee Availability</h1>
+<a th:href="@{/}">Home</a>
+<a th:href="@{/availability/new}">Add Slot</a>
+<table border="1">
+    <tr>
+        <th>ID</th>
+        <th>Employee</th>
+        <th>Date</th>
+        <th>Start</th>
+        <th>End</th>
+        <th>Actions</th>
+    </tr>
+    <tr th:each="slot : ${slots}">
+        <td th:text="${slot.id}"></td>
+        <td th:text="${slot.employee.fullName}"></td>
+        <td th:text="${slot.date}"></td>
+        <td th:text="${slot.startTime}"></td>
+        <td th:text="${slot.endTime}"></td>
+        <td><a th:href="@{'/availability/delete/' + ${slot.id}}">Delete</a></td>
+    </tr>
+</table>
+</body>
+</html>

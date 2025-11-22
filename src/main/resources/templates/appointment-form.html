@@ -9,21 +9,38 @@
         <option th:each="c : ${customers}" th:value="${c.id}" th:text="${c.fullName}"></option>
     </select><br>
 
-    <label>Service:</label>
-    <select name="serviceId" id="serviceSelect" required>
-        <option value="">-- Select Service --</option>
-        <option th:each="s : ${services}" th:value="${s.id}" th:text="${s.name}"></option>
+    <label>Salon:</label>
+    <select id="salonSelect" name="salonId" required>
+        <option value="">-- Select Salon --</option>
+        <option th:each="salon : ${salons}" th:value="${salon.id}" th:text="${salon.name}"></option>
     </select><br>
 
     <label>Employee:</label>
-    <select name="employeeId" id="employeeSelect" required>
+    <select name="employeeId" id="employeeSelect" required disabled>
+        <option value="">-- Select Employee --</option>
         <option th:each="e : ${employees}"
                 th:value="${e.id}"
                 th:text="${e.fullName + ' (' + e.specialization + ')'}"
-                th:attr="data-skills=${#strings.listJoin(e.skills.?[true].![id], ',')}"></option>
+                th:attr="data-salon=${e.salon != null ? e.salon.id : ''},
+                         data-skills=${#strings.listJoin(e.skills.?[true].![id], ',')},
+                         data-availability=${employeeAvailability[e.id]}"></option>
     </select>
-    <p><small>Only employees able to perform the selected service remain selectable.</small></p>
+    <p><small>Pick a salon first to see available employees.</small></p>
     <br>
+    <label>Service:</label>
+    <select name="serviceId" id="serviceSelect" required disabled>
+        <option value="">-- Select Service --</option>
+        <option th:each="s : ${services}"
+                th:value="${s.id}"
+                th:text="${s.name}"
+                th:attr="data-salon=${s.salon != null ? s.salon.id : ''}"></option>
+    </select><br>
+
+
+    <div id="availabilityInfo" style="border:1px solid #ccc;padding:10px;margin-bottom:15px;">
+        <strong>Current availability:</strong>
+        <p id="availabilityText">Select an employee to see their available slots.</p>
+    </div>
 
     <label>Date/Time (yyyy-MM-ddTHH:mm):</label>
     <input type="datetime-local" name="dateTime" required><br>
@@ -34,35 +51,98 @@
 <a th:href="@{/appointments}">Back</a>
 
 <script>
-    const serviceSelect = document.getElementById('serviceSelect');
+    const salonSelect = document.getElementById('salonSelect');
     const employeeSelect = document.getElementById('employeeSelect');
+    const serviceSelect = document.getElementById('serviceSelect');
+    const availabilityText = document.getElementById('availabilityText');
 
-    function filterEmployees() {
-        const targetService = serviceSelect.value;
+    function filterEmployeesBySalon() {
+        const selectedSalon = salonSelect.value;
         const options = Array.from(employeeSelect.options);
-
         let firstVisible = null;
+
+        if (!selectedSalon) {
+            options.forEach(option => option.hidden = option.value !== '');
+            employeeSelect.value = '';
+            employeeSelect.disabled = true;
+            serviceSelect.value = '';
+            serviceSelect.disabled = true;
+            updateAvailabilityMessage();
+            return;
+        }
+
         options.forEach(option => {
-            if (!targetService) {
+            if (!option.value) {
                 option.hidden = false;
-            } else {
-                const skills = option.dataset.skills ? option.dataset.skills.split(',') : [];
-                option.hidden = skills.length === 0 || !skills.includes(targetService);
+                return;
             }
-            if (!option.hidden && !firstVisible && option.value) {
+            const employeeSalon = option.dataset.salon || '';
+            option.hidden = selectedSalon && employeeSalon !== selectedSalon;
+            if (!option.hidden && !firstVisible) {
                 firstVisible = option;
             }
         });
 
-        if (firstVisible) {
-            employeeSelect.value = firstVisible.value;
+        employeeSelect.value = firstVisible ? firstVisible.value : '';
+        employeeSelect.disabled = !firstVisible;
+        filterServicesByEmployee();
+        updateAvailabilityMessage();
+    }
+
+    function filterServicesByEmployee() {
+        const selectedOption = employeeSelect.options[employeeSelect.selectedIndex];
+        if (!selectedOption || !selectedOption.value) {
+            Array.from(serviceSelect.options).forEach(option => option.hidden = option.value !== '');
+            serviceSelect.value = '';
+            serviceSelect.disabled = true;
+            return;
+        }
+
+        const skillIds = selectedOption && selectedOption.dataset.skills
+            ? selectedOption.dataset.skills.split(',').filter(Boolean)
+            : [];
+        const employeeSalon = selectedOption && selectedOption.dataset.salon ? selectedOption.dataset.salon : '';
+
+        const options = Array.from(serviceSelect.options);
+        let firstVisible = null;
+
+        options.forEach(option => {
+            if (!option.value) {
+                option.hidden = false;
+                return;
+            }
+            const serviceSalon = option.dataset.salon || '';
+            const lacksSkill = skillIds.length > 0 && !skillIds.includes(option.value);
+            const wrongSalon = employeeSalon && serviceSalon && employeeSalon !== serviceSalon;
+            option.hidden = lacksSkill || wrongSalon;
+            if (!option.hidden && !firstVisible) {
+                firstVisible = option;
+            }
+        });
+
+        serviceSelect.value = firstVisible ? firstVisible.value : '';
+        serviceSelect.disabled = !firstVisible;
+    }
+
+    function updateAvailabilityMessage() {
+        const selectedOption = employeeSelect.options[employeeSelect.selectedIndex];
+        if (selectedOption && selectedOption.dataset) {
+            const availability = selectedOption.dataset.availability;
+            availabilityText.textContent = availability && availability.trim().length > 0
+                ? availability
+                : 'No availability slots defined yet.';
         } else {
-            employeeSelect.value = '';
+            availabilityText.textContent = 'Select an employee to see their available slots.';
         }
     }
 
-    serviceSelect.addEventListener('change', filterEmployees);
-    filterEmployees();
+    salonSelect.addEventListener('change', filterEmployeesBySalon);
+    employeeSelect.addEventListener('change', () => {
+        filterServicesByEmployee();
+        updateAvailabilityMessage();
+    });
+
+    filterEmployeesBySalon();
 </script>
 </body>
 </html>

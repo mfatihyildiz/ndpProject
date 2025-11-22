@@ -14,7 +14,11 @@ public class Salon {
 
     private String name;
     private String address;
-    private String workingHours; // e.g. "09:00 - 18:00"
+    private String workingHours;
+
+    @ManyToOne
+    @JoinColumn(name = "manager_id", nullable = false)
+    private Admin manager;
 
     @OneToMany(mappedBy = "salon", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Employee> employees;
@@ -24,13 +28,13 @@ public class Salon {
 
     public Salon() {}
 
-    public Salon(String name, String address, String workingHours) {
+    public Salon(String name, String address, String workingHours, Admin manager) {
         this.name = name;
         this.address = address;
         this.workingHours = workingHours;
+        this.manager = manager;
     }
 
-    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -48,6 +52,9 @@ public class Salon {
 
     public List<Services> getServices() { return services; }
     public void setServices(List<Services> services) { this.services = services; }
+
+    public Admin getManager() { return manager; }
+    public void setManager(Admin manager) { this.manager = manager; }
 
     @Override
     public String toString() {

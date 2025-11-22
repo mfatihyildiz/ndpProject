@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Add Availability Slot</title>
+</head>
+<body>
+<h1>Add Availability Slot</h1>
+<form th:action="@{/availability/save}" method="post">
+    <label>Employee:</label>
+    <select name="employeeId" required>
+        <option value="">-- Select employee --</option>
+        <option th:each="emp : ${employees}" th:value="${emp.id}" th:text="${emp.fullName}"></option>
+    </select><br>
+
+    <label>Date:</label>
+    <input type="date" name="date" required><br>
+
+    <label>Start Time:</label>
+    <input type="time" name="startTime" required><br>
+
+    <label>End Time:</label>
+    <input type="time" name="endTime" required><br>
+
+    <button type="submit">Save</button>
+</form>
+
+<a th:href="@{/availability}">Back</a>
+</body>
+</html>

@@ -14,10 +14,13 @@ import java.util.List;
 public class AppointmentService {
 
     private final AppointmentRepo appointmentRepo;
+    private final AvailabilitySlotService availabilitySlotService;
 
     @Autowired
-    public AppointmentService(AppointmentRepo appointmentRepo) {
+    public AppointmentService(AppointmentRepo appointmentRepo,
+                              AvailabilitySlotService availabilitySlotService) {
         this.appointmentRepo = appointmentRepo;
+        this.availabilitySlotService = availabilitySlotService;
     }
 
     public List<Appointment> getAllAppointments() {
@@ -34,14 +37,25 @@ public class AppointmentService {
         appointmentRepo.save(appointment);
     }
 
-    public boolean isEmployeeAvailable(Employee employee, LocalDateTime dateTime) {
+    public boolean isEmployeeAvailable(Employee employee, LocalDateTime dateTime, int durationMinutes) {
         List<Appointment> existing = appointmentRepo.findByEmployee(employee);
+        LocalDateTime requestedEnd = dateTime.plusMinutes(durationMinutes);
         for (Appointment app : existing) {
-            if (app.getDateTime().equals(dateTime) && app.getStatus() != Status.CANCELLED) {
+            if (app.getStatus() == Status.CANCELLED) continue;
+            LocalDateTime existingStart = app.getDateTime();
+            int existingDuration = app.getService() != null ? app.getService().getDuration() : durationMinutes;
+            LocalDateTime existingEnd = existingStart.plusMinutes(existingDuration);
+
+            boolean overlaps = dateTime.isBefore(existingEnd) && requestedEnd.isAfter(existingStart);
+            if (overlaps) {
                 return false;
             }
         }
         return true;
+    }
+
+    public boolean isWithinEmployeeAvailability(Employee employee, LocalDateTime start, int durationMinutes) {
+        return availabilitySlotService.isWithinAnySlot(employee, start, durationMinutes);
     }
 
     public void deleteAppointment(Long id) {
