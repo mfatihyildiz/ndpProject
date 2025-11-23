@@ -5,6 +5,7 @@ import com.example.ndpproject.entity.Customer;
 import com.example.ndpproject.entity.Employee;
 import com.example.ndpproject.entity.Services;
 import com.example.ndpproject.enums.Status;
+import com.example.ndpproject.service.AuthService;
 import com.example.ndpproject.service.AvailabilitySlotService;
 import com.example.ndpproject.service.AppointmentService;
 import com.example.ndpproject.service.CustomerService;
@@ -15,10 +16,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
@@ -31,21 +34,50 @@ public class AppointmentController {
     private final ServicesService servicesService;
     private final SalonService salonService;
     private final AvailabilitySlotService availabilitySlotService;
+    private final AuthService authService;
 
     @Autowired
-    public AppointmentController(AppointmentService appointmentService, CustomerService customerService, EmployeeService employeeService,
-                                 ServicesService servicesService, SalonService salonService, AvailabilitySlotService availabilitySlotService) {
+    public AppointmentController(AppointmentService appointmentService, CustomerService customerService, EmployeeService employeeService, ServicesService servicesService,
+                                 SalonService salonService, AvailabilitySlotService availabilitySlotService, AuthService authService) {
         this.appointmentService = appointmentService;
         this.customerService = customerService;
         this.employeeService = employeeService;
         this.servicesService = servicesService;
         this.salonService = salonService;
         this.availabilitySlotService = availabilitySlotService;
+        this.authService = authService;
     }
 
     @GetMapping
     public String listAppointments(Model model) {
-        model.addAttribute("appointments", appointmentService.getAllAppointments());
+        List<Appointment> appointments;
+        boolean canApprove = false;
+
+        Optional<com.example.ndpproject.entity.Admin> admin = authService.getCurrentAdmin();
+        Optional<Customer> customer = authService.getCurrentCustomer();
+        Optional<Employee> employee = authService.getCurrentEmployee();
+
+        if (admin.isPresent()) {
+            appointments = appointmentService.getAllAppointments();
+            canApprove = true;
+            model.addAttribute("userRole", "ADMIN");
+        } else if (employee.isPresent()) {
+            appointments = appointmentService.getAppointmentsByEmployee(employee.get());
+            canApprove = true;
+            model.addAttribute("userRole", "EMPLOYEE");
+        } else if (customer.isPresent()) {
+            appointments = appointmentService.getAppointmentsByCustomer(customer.get());
+            canApprove = false;
+            model.addAttribute("userRole", "CUSTOMER");
+        } else {
+            appointments = appointmentService.getAllAppointments();
+            canApprove = false;
+            model.addAttribute("userRole", "GUEST");
+        }
+
+        model.addAttribute("appointments", appointments);
+        model.addAttribute("canApprove", canApprove);
+        model.addAttribute("statuses", Status.values());
         return "appointments";
     }
 
@@ -60,8 +92,24 @@ public class AppointmentController {
                                 .collect(Collectors.joining(" | "))
                 ));
 
+        Optional<Customer> currentCustomer = authService.getCurrentCustomer();
+        Optional<com.example.ndpproject.entity.Admin> currentAdmin = authService.getCurrentAdmin();
+        Optional<Employee> currentEmployee = authService.getCurrentEmployee();
+
+        boolean isCustomer = currentCustomer.isPresent() &&
+                (currentAdmin.isEmpty() && currentEmployee.isEmpty());
+
         model.addAttribute("appointment", new Appointment());
-        model.addAttribute("customers", customerService.getAllCustomers());
+
+        if (isCustomer) {
+            model.addAttribute("customers", List.of(currentCustomer.get()));
+            model.addAttribute("selectedCustomerId", currentCustomer.get().getId());
+            model.addAttribute("isCustomer", true);
+        } else {
+            model.addAttribute("customers", customerService.getAllCustomers());
+            model.addAttribute("isCustomer", false);
+        }
+
         model.addAttribute("salons", salonService.getAllSalons());
         model.addAttribute("employees", employees);
         model.addAttribute("services", servicesService.getAllServices());
@@ -71,7 +119,19 @@ public class AppointmentController {
 
     @PostMapping("/save")
     public String createAppointment(@RequestParam Long customerId, @RequestParam Long salonId, @RequestParam Long employeeId,
-                                    @RequestParam Long serviceId, @RequestParam String dateTime) {
+                                    @RequestParam Long serviceId, @RequestParam String dateTime, RedirectAttributes redirectAttributes) {
+        Optional<Customer> currentCustomer = authService.getCurrentCustomer();
+        Optional<com.example.ndpproject.entity.Admin> currentAdmin = authService.getCurrentAdmin();
+        Optional<Employee> currentEmployee = authService.getCurrentEmployee();
+
+        boolean isCustomer = currentCustomer.isPresent() &&
+                (currentAdmin.isEmpty() && currentEmployee.isEmpty());
+
+        if (isCustomer && !currentCustomer.get().getId().equals(customerId)) {
+            redirectAttributes.addFlashAttribute("error", "You can only create appointments for yourself.");
+            return "redirect:/appointments/new";
+        }
+
         Customer customer = customerService.getCustomerById(customerId)
                 .orElseThrow(() -> new RuntimeException("Customer not found"));
         Employee employee = employeeService.getEmployeeById(employeeId)
@@ -102,12 +162,22 @@ public class AppointmentController {
                 customer, employee, services);
 
         appointmentService.saveAppointment(appointment);
+        redirectAttributes.addFlashAttribute("success", "Appointment created successfully! It is pending approval.");
         return "redirect:/appointments";
     }
 
     @PostMapping("/{id}/status")
-    public String updateStatus(@PathVariable Long id, @RequestParam Status status) {
+    public String updateStatus(@PathVariable Long id, @RequestParam Status status, RedirectAttributes redirectAttributes) {
+        Optional<com.example.ndpproject.entity.Admin> admin = authService.getCurrentAdmin();
+        Optional<Employee> employee = authService.getCurrentEmployee();
+
+        if (admin.isEmpty() && employee.isEmpty()) {
+            redirectAttributes.addFlashAttribute("error", "You are not authorized to change appointment status. Only admins and employees can approve appointments.");
+            return "redirect:/appointments";
+        }
+
         appointmentService.updateStatus(id, status);
+        redirectAttributes.addFlashAttribute("success", "Appointment status updated successfully.");
         return "redirect:/appointments";
     }
 

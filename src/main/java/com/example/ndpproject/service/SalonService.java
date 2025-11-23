@@ -36,6 +36,10 @@ public class SalonService {
         return salonRepo.findAll();
     }
 
+    public List<Salon> getSalonsByManager(Admin manager) {
+        return salonRepo.findByManager(manager);
+    }
+
     public Optional<Salon> getSalonById(Long id) {
         return salonRepo.findById(id);
     }
@@ -53,9 +57,6 @@ public class SalonService {
 
     @Transactional
     public Salon saveSalonForCustomer(Salon salon, Customer customer) {
-        customer.setRole(Role.ADMIN);
-        customerRepo.save(customer);
-
         Optional<Admin> existingAdmin = adminRepo.findByUsername(customer.getUsername());
         Admin admin;
 
@@ -67,6 +68,8 @@ public class SalonService {
             admin = new Admin(customer.getUsername(), customer.getPassword(), customer.getFullName());
             adminRepo.save(admin);
         }
+
+        customerRepo.delete(customer);
 
         salon.setManager(admin);
         return salonRepo.save(salon);

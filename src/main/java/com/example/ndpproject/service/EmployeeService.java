@@ -3,10 +3,10 @@ package com.example.ndpproject.service;
 import com.example.ndpproject.entity.Employee;
 import com.example.ndpproject.enums.Role;
 import com.example.ndpproject.repository.EmployeeRepo;
-import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.List;
 import java.util.Optional;
@@ -29,6 +29,10 @@ public class EmployeeService {
 
     public Optional<Employee> getEmployeeById(Long id) {
         return employeeRepo.findById(id);
+    }
+
+    public List<Employee> getEmployeesBySalon(com.example.ndpproject.entity.Salon salon) {
+        return employeeRepo.findBySalon(salon);
     }
 
     @Transactional

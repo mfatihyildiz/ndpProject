@@ -5,9 +5,17 @@
 <h1>New Appointment</h1>
 <form th:action="@{/appointments/save}" method="post">
     <label>Customer:</label>
-    <select name="customerId" required>
+    <div th:if="${isCustomer}">
+        <input type="hidden" name="customerId" th:value="${selectedCustomerId}">
+        <p style="padding: 8px; background-color: #e9ecef; border-radius: 4px; display: inline-block;">
+            <strong th:text="${customers[0].fullName}"></strong> (You)
+        </p>
+    </div>
+    <select th:if="${!isCustomer}" name="customerId" required>
+        <option value="">-- Select Customer --</option>
         <option th:each="c : ${customers}" th:value="${c.id}" th:text="${c.fullName}"></option>
-    </select><br>
+    </select>
+    <br>
 
     <label>Salon:</label>
     <select id="salonSelect" name="salonId" required>

@@ -2,15 +2,30 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <title>Add Availability Slot</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
 <h1>Add Availability Slot</h1>
+
+<div th:if="${error}" style="color: red; padding: 10px; background-color: #f8d7da; border: 1px solid #f5c6cb; margin-bottom: 10px; border-radius: 4px;">
+    <strong>Error:</strong> <span th:text="${error}"></span>
+</div>
+
 <form th:action="@{/availability/save}" method="post">
     <label>Employee:</label>
-    <select name="employeeId" required>
+    <div th:if="${isEmployee}">
+        <input type="hidden" name="employeeId" th:value="${selectedEmployeeId}">
+        <p style="padding: 8px; background-color: #e9ecef; border-radius: 4px; display: inline-block;">
+            <strong th:text="${employees[0].fullName}"></strong> (You)
+        </p>
+    </div>
+    <select th:if="${!isEmployee}" name="employeeId" required>
         <option value="">-- Select employee --</option>
-        <option th:each="emp : ${employees}" th:value="${emp.id}" th:text="${emp.fullName}"></option>
-    </select><br>
+        <option th:each="emp : ${employees}"
+                th:value="${emp.id}"
+                th:text="${emp.fullName + ' (' + (emp.salon != null ? emp.salon.name : 'No Salon') + ')'}"></option>
+    </select>
+    <br>
 
     <label>Date:</label>
     <input type="date" name="date" required><br>

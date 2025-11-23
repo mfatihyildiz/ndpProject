@@ -10,6 +10,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class AvailabilitySlotService {
@@ -42,6 +43,10 @@ public class AvailabilitySlotService {
 
     public void deleteSlot(Long id) {
         slotRepo.deleteById(id);
+    }
+
+    public Optional<AvailabilitySlot> getSlotById(Long id) {
+        return slotRepo.findById(id);
     }
 
     public boolean isWithinAnySlot(Employee employee, LocalDateTime start, int durationMinutes) {

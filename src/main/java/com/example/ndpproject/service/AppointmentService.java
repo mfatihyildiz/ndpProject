@@ -1,6 +1,7 @@
 package com.example.ndpproject.service;
 
 import com.example.ndpproject.entity.Appointment;
+import com.example.ndpproject.entity.Customer;
 import com.example.ndpproject.entity.Employee;
 import com.example.ndpproject.enums.Status;
 import com.example.ndpproject.repository.AppointmentRepo;
@@ -25,6 +26,14 @@ public class AppointmentService {
 
     public List<Appointment> getAllAppointments() {
         return appointmentRepo.findAll();
+    }
+
+    public List<Appointment> getAppointmentsByCustomer(Customer customer) {
+        return appointmentRepo.findByCustomer(customer);
+    }
+
+    public List<Appointment> getAppointmentsByEmployee(Employee employee) {
+        return appointmentRepo.findByEmployee(employee);
     }
 
     public Appointment saveAppointment(Appointment appointment) {

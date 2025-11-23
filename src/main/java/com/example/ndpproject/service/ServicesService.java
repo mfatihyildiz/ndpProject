@@ -1,6 +1,7 @@
 package com.example.ndpproject.service;
 
 import com.example.ndpproject.entity.Services;
+import com.example.ndpproject.entity.Salon;
 import com.example.ndpproject.repository.ServicesRepo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -36,5 +37,9 @@ public class ServicesService {
 
     public List<Services> getServicesByIds(List<Long> ids) {
         return servicesRepo.findAllById(ids);
+    }
+
+    public List<Services> getServicesBySalon(Salon salon) {
+        return servicesRepo.findBySalon(salon);
     }
 }

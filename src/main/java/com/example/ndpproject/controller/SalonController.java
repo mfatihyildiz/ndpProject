@@ -76,8 +76,8 @@ public class SalonController {
                 if (currentCustomer.isPresent()) {
                     salonService.saveSalonForCustomer(salon, currentCustomer.get());
                     redirectAttributes.addFlashAttribute("success",
-                            "Salon created successfully! Your account has been promoted to ADMIN. " +
-                                    "Please log out and log back in to access admin features.");
+                            "Salon created successfully! Your account has been converted to ADMIN. " +
+                                    "Please log out and log back in with the same username and password to access admin features.");
                 } else {
                     redirectAttributes.addFlashAttribute("error", "Unable to identify user. Please try again.");
                     return "redirect:/salons";
