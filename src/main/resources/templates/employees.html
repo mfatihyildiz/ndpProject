@@ -35,8 +35,21 @@
         <td th:text="${emp.fullName}"></td>
         <td th:text="${emp.specialization}"></td>
         <td th:text="${emp.salon != null ? emp.salon.name : '—'}"></td>
-        <td th:text="${emp.availableFrom != null && emp.availableTo != null ?
-            #temporals.format(emp.availableFrom, 'HH:mm') + ' - ' + #temporals.format(emp.availableTo, 'HH:mm') : '—'}"></td>
+        <td>
+            <div th:if="${emp.workingHours != null && !#lists.isEmpty(emp.workingHours)}" style="font-size: 0.85em; line-height: 1.4;">
+                <div th:each="hours : ${emp.workingHours}"
+                     th:if="${!hours.isClosed}"
+                     th:text="${hours.dayOfWeek + ': ' + #temporals.format(hours.startTime, 'HH:mm') + ' - ' + #temporals.format(hours.endTime, 'HH:mm')}"
+                     style="margin: 1px 0;"></div>
+                <div th:each="hours : ${emp.workingHours}"
+                     th:if="${hours.isClosed}"
+                     th:text="${hours.dayOfWeek + ': Closed'}"
+                     style="margin: 1px 0; color: #999; font-style: italic;"></div>
+            </div>
+            <span th:if="${emp.workingHours == null || #lists.isEmpty(emp.workingHours)}" style="color: #999; font-style: italic;">
+                Not set
+            </span>
+        </td>
         <td>
             <span th:if="${#lists.isEmpty(emp.skills)}">—</span>
             <span th:unless="${#lists.isEmpty(emp.skills)}"

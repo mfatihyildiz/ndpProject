@@ -41,7 +41,21 @@
         <td th:text="${salon.id}"></td>
         <td th:text="${salon.name}"></td>
         <td th:text="${salon.address}"></td>
-        <td th:text="${salon.workingHours}"></td>
+        <td>
+            <div th:if="${salon.workingHours != null && !#lists.isEmpty(salon.workingHours)}" style="font-size: 0.85em; line-height: 1.4;">
+                <div th:each="hours : ${salon.workingHours}"
+                     th:if="${!hours.isClosed}"
+                     th:text="${hours.dayOfWeek + ': ' + #temporals.format(hours.startTime, 'HH:mm') + ' - ' + #temporals.format(hours.endTime, 'HH:mm')}"
+                     style="margin: 1px 0;"></div>
+                <div th:each="hours : ${salon.workingHours}"
+                     th:if="${hours.isClosed}"
+                     th:text="${hours.dayOfWeek + ': Closed'}"
+                     style="margin: 1px 0; color: #999; font-style: italic;"></div>
+            </div>
+            <span th:if="${salon.workingHours == null || #lists.isEmpty(salon.workingHours)}" style="color: #999; font-style: italic;">
+                Not set
+            </span>
+        </td>
         <td th:text="${salon.manager != null ? salon.manager.fullName : 'N/A'}"></td>
         <td th:if="${isAdmin}">
             <a th:href="@{'/salons/delete/' + ${salon.id}}"

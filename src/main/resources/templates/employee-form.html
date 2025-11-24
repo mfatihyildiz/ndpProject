@@ -1,9 +1,19 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><title>Add Employee</title></head>
+<head>
+    <title>Add Employee</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+    <style>
+        .working-hours-table { border-collapse: collapse; width: 100%; margin-top: 15px; }
+        .working-hours-table th, .working-hours-table td { padding: 8px; text-align: left; border: 1px solid #ddd; }
+        .working-hours-table th { background-color: #f2f2f2; }
+        .time-inputs { display: flex; gap: 10px; align-items: center; }
+        .closed-checkbox { margin-right: 10px; }
+    </style>
+</head>
 <body>
 <h1>Add Employee</h1>
-<form th:action="@{/employees/save}" th:object="${employee}" method="post">
+<form th:action="@{/employees/save}" th:object="${employee}" method="post" id="employeeForm">
     <label>Username:</label>
     <input type="text" th:field="*{username}" required><br>
 
@@ -16,19 +26,48 @@
     <label>Specialization:</label>
     <input type="text" th:field="*{specialization}" required><br>
 
-    <label>Available From:</label>
-    <input type="time" th:field="*{availableFrom}" required><br>
-
-    <label>Available To:</label>
-    <input type="time" th:field="*{availableTo}" required><br>
-
     <label>Salon:</label>
     <select name="salonId" required>
+        <option value="">-- Select salon --</option>
         <option th:each="salon : ${salons}"
                 th:value="${salon.id}"
                 th:text="${salon.name}"></option>
-    </select>
-    <br>
+    </select><br>
+
+    <h3>Working Hours (per day)</h3>
+    <table class="working-hours-table">
+        <tr>
+            <th>Day</th>
+            <th>Closed</th>
+            <th>Start Time</th>
+            <th>End Time</th>
+        </tr>
+        <tr th:each="day : ${daysOfWeek}">
+            <td><strong th:text="${day}"></strong></td>
+            <td>
+                <input type="checkbox"
+                       th:name="'closed_' + ${day.name()}"
+                       th:id="'closed_' + ${day.name()}"
+                       class="closed-checkbox"
+                       th:attr="data-day=${day.name()}"
+                       onchange="toggleDayHoursFromEvent(this)">
+            </td>
+            <td>
+                <input type="time"
+                       th:name="'startTime_' + ${day.name()}"
+                       th:id="'startTime_' + ${day.name()}"
+                       th:value="'09:00'"
+                       class="time-input">
+            </td>
+            <td>
+                <input type="time"
+                       th:name="'endTime_' + ${day.name()}"
+                       th:id="'endTime_' + ${day.name()}"
+                       th:value="'18:00'"
+                       class="time-input">
+            </td>
+        </tr>
+    </table>
 
     <label>Services they can perform:</label>
     <select name="serviceIds" multiple size="5">
@@ -36,11 +75,41 @@
                 th:value="${service.id}"
                 th:text="${service.name + ' (' + service.duration + 'm)'}"></option>
     </select>
-    <p><small>You can pick multiple services.</small></p>
+    <p><small>Hold Ctrl (Cmd on Mac) to pick multiple services.</small></p>
 
     <button type="submit">Save</button>
 </form>
 
 <a th:href="@{/employees}">Back</a>
+
+<script>
+    function toggleDayHours(dayName) {
+        const closedCheckbox = document.getElementById('closed_' + dayName);
+        const startTime = document.getElementById('startTime_' + dayName);
+        const endTime = document.getElementById('endTime_' + dayName);
+
+        if (closedCheckbox.checked) {
+            startTime.disabled = true;
+            endTime.disabled = true;
+            startTime.value = '';
+            endTime.value = '';
+        } else {
+            startTime.disabled = false;
+            endTime.disabled = false;
+            if (!startTime.value) startTime.value = '09:00';
+            if (!endTime.value) endTime.value = '18:00';
+        }
+    }
+
+    function toggleDayHoursFromEvent(checkbox) {
+        const dayName = checkbox.getAttribute('data-day');
+        toggleDayHours(dayName);
+    }
+
+    document.querySelectorAll('.closed-checkbox').forEach(checkbox => {
+        const dayName = checkbox.getAttribute('data-day');
+        toggleDayHours(dayName);
+    });
+</script>
 </body>
 </html>

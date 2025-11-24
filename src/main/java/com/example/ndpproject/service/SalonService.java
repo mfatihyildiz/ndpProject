@@ -3,6 +3,7 @@ package com.example.ndpproject.service;
 import com.example.ndpproject.entity.Admin;
 import com.example.ndpproject.entity.Customer;
 import com.example.ndpproject.entity.Salon;
+import com.example.ndpproject.entity.WorkingHours;
 import com.example.ndpproject.enums.Role;
 import com.example.ndpproject.repository.AdminRepo;
 import com.example.ndpproject.repository.CustomerRepo;
@@ -13,7 +14,10 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.DayOfWeek;
+import java.time.LocalTime;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Service
@@ -23,13 +27,16 @@ public class SalonService {
     private final AdminRepo adminRepo;
     private final CustomerRepo customerRepo;
     private final PasswordEncoder passwordEncoder;
+    private final WorkingHoursService workingHoursService;
 
     @Autowired
-    public SalonService(SalonRepo salonRepo, AdminRepo adminRepo, CustomerRepo customerRepo, PasswordEncoder passwordEncoder) {
+    public SalonService(SalonRepo salonRepo, AdminRepo adminRepo, CustomerRepo customerRepo,
+                        PasswordEncoder passwordEncoder, WorkingHoursService workingHoursService) {
         this.salonRepo = salonRepo;
         this.adminRepo = adminRepo;
         this.customerRepo = customerRepo;
         this.passwordEncoder = passwordEncoder;
+        this.workingHoursService = workingHoursService;
     }
 
     public List<Salon> getAllSalons() {
@@ -84,5 +91,39 @@ public class SalonService {
 
     public boolean isManagerOfSalon(Long salonId, Admin manager) {
         return salonRepo.existsByIdAndManager(salonId, manager);
+    }
+
+    @Transactional
+    public void saveWorkingHoursForSalon(Salon salon, Map<String, String> allParams) {
+        workingHoursService.deleteAllBySalon(salon);
+
+        for (DayOfWeek day : DayOfWeek.values()) {
+            String dayName = day.name();
+            String closedParam = "closed_" + dayName;
+            String startTimeParam = "startTime_" + dayName;
+            String endTimeParam = "endTime_" + dayName;
+
+            boolean isClosed = allParams.containsKey(closedParam) &&
+                    "on".equals(allParams.get(closedParam));
+
+            WorkingHours workingHours;
+            if (isClosed) {
+                workingHours = new WorkingHours(salon, day, true);
+            } else {
+                String startTimeStr = allParams.get(startTimeParam);
+                String endTimeStr = allParams.get(endTimeParam);
+
+                if (startTimeStr != null && !startTimeStr.isEmpty() &&
+                        endTimeStr != null && !endTimeStr.isEmpty()) {
+                    LocalTime startTime = LocalTime.parse(startTimeStr);
+                    LocalTime endTime = LocalTime.parse(endTimeStr);
+                    workingHours = new WorkingHours(salon, day, startTime, endTime);
+                } else {
+                    continue;
+                }
+            }
+
+            workingHoursService.saveWorkingHours(workingHours);
+        }
     }
 }

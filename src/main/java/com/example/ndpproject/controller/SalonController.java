@@ -5,6 +5,7 @@ import com.example.ndpproject.entity.Customer;
 import com.example.ndpproject.entity.Salon;
 import com.example.ndpproject.service.AuthService;
 import com.example.ndpproject.service.SalonService;
+import com.example.ndpproject.service.WorkingHoursService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
@@ -12,6 +13,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.DayOfWeek;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 @Controller
@@ -20,16 +24,26 @@ public class SalonController {
 
     private final SalonService salonService;
     private final AuthService authService;
+    private final WorkingHoursService workingHoursService;
 
     @Autowired
-    public SalonController(SalonService salonService, AuthService authService) {
+    public SalonController(SalonService salonService, AuthService authService, WorkingHoursService workingHoursService) {
         this.salonService = salonService;
         this.authService = authService;
+        this.workingHoursService = workingHoursService;
     }
 
     @GetMapping
     public String listSalons(Model model) {
-        model.addAttribute("salons", salonService.getAllSalons());
+        List<Salon> salons = salonService.getAllSalons();
+
+        salons.forEach(salon -> {
+            if (salon.getWorkingHours() == null || salon.getWorkingHours().isEmpty()) {
+                salon.setWorkingHours(workingHoursService.getWorkingHoursBySalon(salon));
+            }
+        });
+
+        model.addAttribute("salons", salons);
 
         Optional<Admin> currentAdmin = authService.getCurrentAdmin();
         if (currentAdmin.isPresent()) {
@@ -50,11 +64,12 @@ public class SalonController {
             return "redirect:/login";
         }
         model.addAttribute("salon", new Salon());
+        model.addAttribute("daysOfWeek", DayOfWeek.values());
         return "salon-form";
     }
 
     @PostMapping("/save")
-    public String saveSalon(@ModelAttribute Salon salon, RedirectAttributes redirectAttributes) {
+    public String saveSalon(@ModelAttribute Salon salon, @RequestParam Map<String, String> allParams, RedirectAttributes redirectAttributes) {
         if (!authService.isAuthenticated()) {
             redirectAttributes.addFlashAttribute("error", "You must be logged in to create a salon.");
             return "redirect:/login";
@@ -62,19 +77,20 @@ public class SalonController {
 
         try {
             Optional<Admin> currentAdmin = authService.getCurrentAdmin();
+            Salon savedSalon;
 
             if (currentAdmin.isPresent()) {
                 if (salon.getId() != null) {
-                    salonService.saveSalon(salon, currentAdmin.get());
+                    savedSalon = salonService.saveSalon(salon, currentAdmin.get());
                     redirectAttributes.addFlashAttribute("success", "Salon updated successfully.");
                 } else {
-                    salonService.saveSalon(salon, currentAdmin.get());
+                    savedSalon = salonService.saveSalon(salon, currentAdmin.get());
                     redirectAttributes.addFlashAttribute("success", "Salon created successfully.");
                 }
             } else {
                 Optional<Customer> currentCustomer = authService.getCurrentCustomer();
                 if (currentCustomer.isPresent()) {
-                    salonService.saveSalonForCustomer(salon, currentCustomer.get());
+                    savedSalon = salonService.saveSalonForCustomer(salon, currentCustomer.get());
                     redirectAttributes.addFlashAttribute("success",
                             "Salon created successfully! Your account has been converted to ADMIN. " +
                                     "Please log out and log back in with the same username and password to access admin features.");
@@ -83,9 +99,15 @@ public class SalonController {
                     return "redirect:/salons";
                 }
             }
+
+            salonService.saveWorkingHoursForSalon(savedSalon, allParams);
+
         } catch (AccessDeniedException e) {
             redirectAttributes.addFlashAttribute("error", e.getMessage());
             return "redirect:/salons";
+        } catch (IllegalArgumentException e) {
+            redirectAttributes.addFlashAttribute("error", e.getMessage());
+            return "redirect:/salons/new";
         }
 
         return "redirect:/salons";

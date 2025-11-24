@@ -5,19 +5,14 @@ import com.example.ndpproject.entity.Customer;
 import com.example.ndpproject.entity.Employee;
 import com.example.ndpproject.entity.Services;
 import com.example.ndpproject.enums.Status;
-import com.example.ndpproject.service.AuthService;
-import com.example.ndpproject.service.AvailabilitySlotService;
-import com.example.ndpproject.service.AppointmentService;
-import com.example.ndpproject.service.CustomerService;
-import com.example.ndpproject.service.EmployeeService;
-import com.example.ndpproject.service.SalonService;
-import com.example.ndpproject.service.ServicesService;
+import com.example.ndpproject.service.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -35,10 +30,12 @@ public class AppointmentController {
     private final SalonService salonService;
     private final AvailabilitySlotService availabilitySlotService;
     private final AuthService authService;
+    private final WorkingHoursService workingHoursService;
 
     @Autowired
-    public AppointmentController(AppointmentService appointmentService, CustomerService customerService, EmployeeService employeeService, ServicesService servicesService,
-                                 SalonService salonService, AvailabilitySlotService availabilitySlotService, AuthService authService) {
+    public AppointmentController(AppointmentService appointmentService, CustomerService customerService, EmployeeService employeeService,
+                                 ServicesService servicesService, SalonService salonService, AvailabilitySlotService availabilitySlotService,
+                                 AuthService authService, WorkingHoursService workingHoursService) {
         this.appointmentService = appointmentService;
         this.customerService = customerService;
         this.employeeService = employeeService;
@@ -46,6 +43,7 @@ public class AppointmentController {
         this.salonService = salonService;
         this.availabilitySlotService = availabilitySlotService;
         this.authService = authService;
+        this.workingHoursService = workingHoursService;
     }
 
     @GetMapping
@@ -117,6 +115,20 @@ public class AppointmentController {
         return "appointment-form";
     }
 
+    @GetMapping("/available-slots")
+    @ResponseBody
+    public List<String> getAvailableSlots(@RequestParam Long employeeId, @RequestParam String date, @RequestParam int serviceDuration) {
+        Employee employee = employeeService.getEmployeeById(employeeId)
+                .orElseThrow(() -> new IllegalArgumentException("Employee not found"));
+
+        LocalDate appointmentDate = LocalDate.parse(date);
+        List<LocalDateTime> slots = appointmentService.getAvailableTimeSlots(employee, appointmentDate, serviceDuration);
+
+        return slots.stream()
+                .map(slot -> slot.toString())
+                .collect(java.util.stream.Collectors.toList());
+    }
+
     @PostMapping("/save")
     public String createAppointment(@RequestParam Long customerId, @RequestParam Long salonId, @RequestParam Long employeeId,
                                     @RequestParam Long serviceId, @RequestParam String dateTime, RedirectAttributes redirectAttributes) {
@@ -140,22 +152,34 @@ public class AppointmentController {
                 .orElseThrow(() -> new RuntimeException("Service not found"));
 
         if (employee.getSalon() == null || !employee.getSalon().getId().equals(salonId)) {
-            throw new RuntimeException("Selected employee does not belong to the chosen salon.");
+            redirectAttributes.addFlashAttribute("error", "Selected employee does not belong to the chosen salon.");
+            return "redirect:/appointments/new";
         }
 
         if (!employeeService.canPerformService(employeeId, serviceId)) {
-            throw new RuntimeException("Employee cannot perform the selected service!");
+            redirectAttributes.addFlashAttribute("error", "Employee cannot perform the selected service!");
+            return "redirect:/appointments/new";
         }
 
         LocalDateTime dt = LocalDateTime.parse(dateTime);
         int duration = services.getDuration();
 
-        if (!appointmentService.isWithinEmployeeAvailability(employee, dt, duration)) {
-            throw new RuntimeException("Selected time is outside the employee's availability.");
+        if (!appointmentService.isWithinSalonWorkingHours(employee, dt, duration)) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Selected time is outside the salon's working hours. Please check the salon's operating hours.");
+            return "redirect:/appointments/new";
+        }
+
+        if (!workingHoursService.isWithinEmployeeWorkingHours(employee, dt, duration)) {
+            redirectAttributes.addFlashAttribute("error",
+                    "Selected time is outside the employee's working hours.");
+            return "redirect:/appointments/new";
         }
 
         if (!appointmentService.isEmployeeAvailable(employee, dt, duration)) {
-            throw new RuntimeException("Employee already has an appointment that overlaps this time!");
+            redirectAttributes.addFlashAttribute("error",
+                    "Employee already has an appointment that overlaps this time!");
+            return "redirect:/appointments/new";
         }
 
         Appointment appointment = new Appointment(dt, Status.PENDING,

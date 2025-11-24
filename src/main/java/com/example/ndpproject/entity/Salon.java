@@ -14,7 +14,6 @@ public class Salon {
 
     private String name;
     private String address;
-    private String workingHours;
 
     @ManyToOne
     @JoinColumn(name = "manager_id", nullable = false)
@@ -26,15 +25,18 @@ public class Salon {
     @OneToMany(mappedBy = "salon", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Services> services;
 
+    @OneToMany(mappedBy = "salon", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<WorkingHours> workingHours;
+
     public Salon() {}
 
-    public Salon(String name, String address, String workingHours, Admin manager) {
+    public Salon(String name, String address, Admin manager) {
         this.name = name;
         this.address = address;
-        this.workingHours = workingHours;
         this.manager = manager;
     }
 
+    // Getters and Setters
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -44,14 +46,14 @@ public class Salon {
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
 
-    public String getWorkingHours() { return workingHours; }
-    public void setWorkingHours(String workingHours) { this.workingHours = workingHours; }
-
     public List<Employee> getEmployees() { return employees; }
     public void setEmployees(List<Employee> employees) { this.employees = employees; }
 
     public List<Services> getServices() { return services; }
     public void setServices(List<Services> services) { this.services = services; }
+
+    public List<WorkingHours> getWorkingHours() { return workingHours; }
+    public void setWorkingHours(List<WorkingHours> workingHours) { this.workingHours = workingHours; }
 
     public Admin getManager() { return manager; }
     public void setManager(Admin manager) { this.manager = manager; }

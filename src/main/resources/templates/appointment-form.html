@@ -36,22 +36,36 @@
     <p><small>Pick a salon first to see available employees.</small></p>
     <br>
     <label>Service:</label>
-    <select name="serviceId" id="serviceSelect" required disabled>
+    <select name="serviceId" id="serviceSelect" required disabled onchange="updateServiceDetails(); updateAvailableSlots();">
         <option value="">-- Select Service --</option>
         <option th:each="s : ${services}"
                 th:value="${s.id}"
                 th:text="${s.name}"
-                th:attr="data-salon=${s.salon != null ? s.salon.id : ''}"></option>
+                th:attr="data-salon=${s.salon != null ? s.salon.id : ''},
+                         data-duration=${s.duration},
+                         data-price=${s.price}"></option>
     </select><br>
+
+    <div id="serviceDetails" style="border: 1px solid #ddd; padding: 10px; margin: 10px 0; background-color: #f9f9f9; border-radius: 4px; display: none;">
+        <strong>Service Details:</strong>
+        <p id="serviceDetailsText" style="margin: 5px 0;"></p>
+    </div>
 
 
     <div id="availabilityInfo" style="border:1px solid #ccc;padding:10px;margin-bottom:15px;">
-        <strong>Current availability:</strong>
-        <p id="availabilityText">Select an employee to see their available slots.</p>
+        <strong>Available Time Slots:</strong>
+        <p id="availabilityText">Select an employee, service, and date to see available time slots.</p>
+        <div id="availableSlotsList" style="margin-top: 10px;"></div>
     </div>
 
-    <label>Date/Time (yyyy-MM-ddTHH:mm):</label>
-    <input type="datetime-local" name="dateTime" required><br>
+    <label>Date:</label>
+    <input type="date" id="appointmentDate" name="appointmentDate" required onchange="updateAvailableSlots()"><br>
+
+    <label>Time:</label>
+    <select id="appointmentTime" name="appointmentTime" required disabled>
+        <option value="">-- Select a time slot --</option>
+    </select>
+    <input type="hidden" id="dateTime" name="dateTime" required><br>
 
     <button type="submit">Save Appointment</button>
 </form>
@@ -130,24 +144,93 @@
 
         serviceSelect.value = firstVisible ? firstVisible.value : '';
         serviceSelect.disabled = !firstVisible;
+        updateServiceDetails();
     }
 
     function updateAvailabilityMessage() {
-        const selectedOption = employeeSelect.options[employeeSelect.selectedIndex];
-        if (selectedOption && selectedOption.dataset) {
-            const availability = selectedOption.dataset.availability;
-            availabilityText.textContent = availability && availability.trim().length > 0
-                ? availability
-                : 'No availability slots defined yet.';
-        } else {
-            availabilityText.textContent = 'Select an employee to see their available slots.';
+        updateAvailableSlots();
+    }
+
+    function updateServiceDetails() {
+        const serviceSelect = document.getElementById('serviceSelect');
+        const serviceDetails = document.getElementById('serviceDetails');
+        const serviceDetailsText = document.getElementById('serviceDetailsText');
+        const selectedOption = serviceSelect.options[serviceSelect.selectedIndex];
+
+        if (!selectedOption || !selectedOption.value) {
+            serviceDetails.style.display = 'none';
+            return;
         }
+
+        const serviceName = selectedOption.textContent;
+        const duration = selectedOption.dataset.duration || 'N/A';
+        const price = selectedOption.dataset.price || '0.00';
+
+        serviceDetailsText.innerHTML = `
+            <strong>${serviceName}</strong><br>
+            Duration: ${duration} minutes<br>
+            Price: $${parseFloat(price).toFixed(2)}
+        `;
+        serviceDetails.style.display = 'block';
+    }
+
+    function updateAvailableSlots() {
+        const selectedEmployee = employeeSelect.value;
+        const selectedService = serviceSelect.value;
+        const selectedDate = document.getElementById('appointmentDate').value;
+        const timeSelect = document.getElementById('appointmentTime');
+        const slotsList = document.getElementById('availableSlotsList');
+
+        timeSelect.innerHTML = '<option value="">-- Select a time slot --</option>';
+        timeSelect.disabled = true;
+        slotsList.innerHTML = '';
+
+        if (!selectedEmployee || !selectedService || !selectedDate) {
+            availabilityText.textContent = 'Select an employee, service, and date to see available time slots.';
+            return;
+        }
+
+        const serviceOption = serviceSelect.options[serviceSelect.selectedIndex];
+        const serviceDuration = serviceOption ? (serviceOption.dataset.duration || 30) : 30;
+
+        fetch(`/appointments/available-slots?employeeId=${selectedEmployee}&date=${selectedDate}&serviceDuration=${serviceDuration}`)
+            .then(response => response.json())
+            .then(slots => {
+                if (slots.length === 0) {
+                    availabilityText.textContent = 'No available time slots for this date. The employee may be closed or fully booked.';
+                    slotsList.innerHTML = '<p style="color: #999; font-style: italic;">No slots available</p>';
+                    return;
+                }
+
+                availabilityText.textContent = `Found ${slots.length} available time slot(s):`;
+
+                slots.forEach(slot => {
+                    const dateTime = new Date(slot);
+                    const timeStr = dateTime.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: false });
+                    const option = document.createElement('option');
+                    option.value = slot;
+                    option.textContent = timeStr;
+                    timeSelect.appendChild(option);
+                });
+
+                timeSelect.disabled = false;
+
+                timeSelect.addEventListener('change', function() {
+                    if (this.value) {
+                        document.getElementById('dateTime').value = this.value;
+                    }
+                });
+            })
+            .catch(error => {
+                console.error('Error fetching available slots:', error);
+                availabilityText.textContent = 'Error loading available slots. Please try again.';
+            });
     }
 
     salonSelect.addEventListener('change', filterEmployeesBySalon);
     employeeSelect.addEventListener('change', () => {
         filterServicesByEmployee();
-        updateAvailabilityMessage();
+        updateAvailableSlots();
     });
 
     filterEmployeesBySalon();

@@ -49,7 +49,13 @@
         <td th:text="${a.id}"></td>
         <td th:text="${a.customer.fullName}"></td>
         <td th:text="${a.employee.fullName}"></td>
-        <td th:text="${a.service.name}"></td>
+        <td>
+            <strong th:text="${a.service.name}"></strong><br>
+            <small style="color: #666;">
+                <span th:text="${a.service.duration} + ' min'"></span> |
+                <span th:text="'$' + ${#numbers.formatDecimal(a.service.price, 1, 2)}"></span>
+            </small>
+        </td>
         <td th:text="${#temporals.format(a.dateTime, 'yyyy-MM-dd HH:mm')}"></td>
         <td>
             <span th:class="${a.status.name() == 'PENDING'} ? 'status-pending' :
