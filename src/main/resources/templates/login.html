@@ -1,19 +1,26 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><title>Login</title></head>
+<head>
+    <title>Login</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
 <body>
-<h2>Welcome to BarberShop</h2>
-<form th:action="@{/login}" method="post">
-    <label>Username:</label>
-    <input type="text" name="username" required><br>
-    <label>Password:</label>
-    <input type="password" name="password" required><br>
-    <button type="submit">Login</button>
-</form>
+<div class="container">
+    <h1>Welcome to BarberShop</h1>
+    <form th:action="@{/login}" method="post">
+        <label>Username:</label>
+        <input type="text" name="username" required>
 
-<p>Don’t have an account?</p>
-<a th:href="@{/register}">
-    <button type="button">Create a New User</button>
-</a>
+        <label>Password:</label>
+        <input type="password" name="password" required>
+
+        <button type="submit">Login</button>
+    </form>
+
+    <p class="text-center mt-20">Don't have an account?</p>
+    <div class="text-center">
+        <a th:href="@{/register}" class="btn">Create a New User</a>
+    </div>
+</div>
 </body>
 </html>

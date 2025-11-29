@@ -6,94 +6,100 @@
     <style>
         .working-hours-table { border-collapse: collapse; width: 100%; margin-top: 15px; }
         .working-hours-table th, .working-hours-table td { padding: 8px; text-align: left; border: 1px solid #ddd; }
-        .working-hours-table th { background-color: #f2f2f2; }
+        .working-hours-table th { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; }
         .time-inputs { display: flex; gap: 10px; align-items: center; }
         .closed-checkbox { margin-right: 10px; }
     </style>
 </head>
 <body>
-<h1>Add New Salon</h1>
+<div class="container">
+    <h1>Add New Salon</h1>
 
-<div style="background-color: #fff3cd; border: 1px solid #ffc107; padding: 10px; margin-bottom: 15px; border-radius: 4px;">
-    <strong>Note:</strong> When you create a salon, you will automatically become the salon manager (admin).
-    An admin account will be created for you with your current username and the same password.
-    You can log in with your existing credentials to manage your salon.
-</div>
+    <div class="info-box">
+        <strong>Note:</strong> When you create a salon, you will automatically become the salon manager (admin).
+        An admin account will be created for you with your current username and the same password.
+        You can log in with your existing credentials to manage your salon.
+    </div>
 
-<form th:action="@{/salons/save}" th:object="${salon}" method="post" id="salonForm">
-    <label>Name:</label>
-    <input type="text" th:field="*{name}" required><br>
+    <nav>
+        <a th:href="@{/salons}">Back to Salons</a>
+    </nav>
 
-    <label>Address:</label>
-    <input type="text" th:field="*{address}" required><br>
+    <form th:action="@{/salons/save}" th:object="${salon}" method="post" id="salonForm">
+        <label>Name:</label>
+        <input type="text" th:field="*{name}" required><br>
 
-    <h3>Working Hours (per day)</h3>
-    <table class="working-hours-table">
-        <tr>
-            <th>Day</th>
-            <th>Closed</th>
-            <th>Start Time</th>
-            <th>End Time</th>
-        </tr>
-        <tr th:each="day : ${daysOfWeek}">
-            <td><strong th:text="${day}"></strong></td>
-            <td>
-                <input type="checkbox"
-                       th:name="'closed_' + ${day.name()}"
-                       th:id="'closed_' + ${day.name()}"
-                       class="closed-checkbox"
-                       th:attr="data-day=${day.name()}"
-                       onchange="toggleDayHoursFromEvent(this)">
-            </td>
-            <td>
-                <input type="time"
-                       th:name="'startTime_' + ${day.name()}"
-                       th:id="'startTime_' + ${day.name()}"
-                       th:value="'09:00'"
-                       class="time-input">
-            </td>
-            <td>
-                <input type="time"
-                       th:name="'endTime_' + ${day.name()}"
-                       th:id="'endTime_' + ${day.name()}"
-                       th:value="'18:00'"
-                       class="time-input">
-            </td>
-        </tr>
-    </table>
+        <label>Address:</label>
+        <input type="text" th:field="*{address}" required><br>
 
-    <button type="submit">Create Salon</button>
-</form>
-<a th:href="@{/salons}">Back to Salons</a>
+        <h3>Working Hours (per day)</h3>
+        <table class="working-hours-table">
+            <tr>
+                <th>Day</th>
+                <th>Closed</th>
+                <th>Start Time</th>
+                <th>End Time</th>
+            </tr>
+            <tr th:each="day : ${daysOfWeek}">
+                <td><strong th:text="${day}"></strong></td>
+                <td>
+                    <input type="checkbox"
+                           th:name="'closed_' + ${day.name()}"
+                           th:id="'closed_' + ${day.name()}"
+                           class="closed-checkbox"
+                           th:attr="data-day=${day.name()}"
+                           onchange="toggleDayHoursFromEvent(this)">
+                </td>
+                <td>
+                    <input type="time"
+                           th:name="'startTime_' + ${day.name()}"
+                           th:id="'startTime_' + ${day.name()}"
+                           th:value="'09:00'"
+                           class="time-input">
+                </td>
+                <td>
+                    <input type="time"
+                           th:name="'endTime_' + ${day.name()}"
+                           th:id="'endTime_' + ${day.name()}"
+                           th:value="'18:00'"
+                           class="time-input">
+                </td>
+            </tr>
+        </table>
 
-<script>
-    function toggleDayHours(dayName) {
-        const closedCheckbox = document.getElementById('closed_' + dayName);
-        const startTime = document.getElementById('startTime_' + dayName);
-        const endTime = document.getElementById('endTime_' + dayName);
+        <button type="submit">Create Salon</button>
+    </form>
+    <a th:href="@{/salons}">Back to Salons</a>
 
-        if (closedCheckbox.checked) {
-            startTime.disabled = true;
-            endTime.disabled = true;
-            startTime.value = '';
-            endTime.value = '';
-        } else {
-            startTime.disabled = false;
-            endTime.disabled = false;
-            if (!startTime.value) startTime.value = '09:00';
-            if (!endTime.value) endTime.value = '18:00';
+    <script>
+        function toggleDayHours(dayName) {
+            const closedCheckbox = document.getElementById('closed_' + dayName);
+            const startTime = document.getElementById('startTime_' + dayName);
+            const endTime = document.getElementById('endTime_' + dayName);
+
+            if (closedCheckbox.checked) {
+                startTime.disabled = true;
+                endTime.disabled = true;
+                startTime.value = '';
+                endTime.value = '';
+            } else {
+                startTime.disabled = false;
+                endTime.disabled = false;
+                if (!startTime.value) startTime.value = '09:00';
+                if (!endTime.value) endTime.value = '18:00';
+            }
         }
-    }
 
-    function toggleDayHoursFromEvent(checkbox) {
-        const dayName = checkbox.getAttribute('data-day');
-        toggleDayHours(dayName);
-    }
+        function toggleDayHoursFromEvent(checkbox) {
+            const dayName = checkbox.getAttribute('data-day');
+            toggleDayHours(dayName);
+        }
 
-    document.querySelectorAll('.closed-checkbox').forEach(checkbox => {
-        const dayName = checkbox.getAttribute('data-day');
-        toggleDayHours(dayName);
-    });
-</script>
+        document.querySelectorAll('.closed-checkbox').forEach(checkbox => {
+            const dayName = checkbox.getAttribute('data-day');
+            toggleDayHours(dayName);
+        });
+    </script>
+</div>
 </body>
 </html>

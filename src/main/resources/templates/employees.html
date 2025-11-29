@@ -5,67 +5,73 @@
     <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<h1>Employees</h1>
+<div class="container">
+    <h1>Employees</h1>
 
-<div th:if="${success}" style="color: green; padding: 10px; background-color: #d4edda; border: 1px solid #c3e6cb; margin-bottom: 10px; border-radius: 4px;">
-    <strong>Success:</strong> <span th:text="${success}"></span>
-</div>
+    <div th:if="${success}" class="alert alert-success">
+        <strong>Success:</strong> <span th:text="${success}"></span>
+    </div>
 
-<div th:if="${error}" style="color: red; padding: 10px; background-color: #f8d7da; border: 1px solid #f5c6cb; margin-bottom: 10px; border-radius: 4px;">
-    <strong>Error:</strong> <span th:text="${error}"></span>
-</div>
+    <div th:if="${error}" class="alert alert-error">
+        <strong>Error:</strong> <span th:text="${error}"></span>
+    </div>
 
-<div style="margin-bottom: 15px;">
-    <a th:href="@{/}">Home</a> |
-    <a th:href="@{/employees/new}">Add Employee</a>
-</div>
+    <nav>
+        <a th:href="@{/}">Home</a>
+        <a th:href="@{/employees/new}">Add Employee</a>
+    </nav>
 
-<table border="1" style="margin-top: 20px; border-collapse: collapse; width: 100%;">
-    <tr style="background-color: #f2f2f2;">
-        <th>ID</th>
-        <th>Name</th>
-        <th>Specialization</th>
-        <th>Salon</th>
-        <th>Availability</th>
-        <th>Services</th>
-        <th>Actions</th>
-    </tr>
-    <tr th:each="emp : ${employees}">
-        <td th:text="${emp.id}"></td>
-        <td th:text="${emp.fullName}"></td>
-        <td th:text="${emp.specialization}"></td>
-        <td th:text="${emp.salon != null ? emp.salon.name : '—'}"></td>
-        <td>
-            <div th:if="${emp.workingHours != null && !#lists.isEmpty(emp.workingHours)}" style="font-size: 0.85em; line-height: 1.4;">
-                <div th:each="hours : ${emp.workingHours}"
-                     th:if="${!hours.isClosed}"
-                     th:text="${hours.dayOfWeek + ': ' + #temporals.format(hours.startTime, 'HH:mm') + ' - ' + #temporals.format(hours.endTime, 'HH:mm')}"
-                     style="margin: 1px 0;"></div>
-                <div th:each="hours : ${emp.workingHours}"
-                     th:if="${hours.isClosed}"
-                     th:text="${hours.dayOfWeek + ': Closed'}"
-                     style="margin: 1px 0; color: #999; font-style: italic;"></div>
-            </div>
-            <span th:if="${emp.workingHours == null || #lists.isEmpty(emp.workingHours)}" style="color: #999; font-style: italic;">
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Specialization</th>
+            <th>Salon</th>
+            <th>Availability</th>
+            <th>Services</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="emp : ${employees}">
+            <td th:text="${emp.id}"></td>
+            <td th:text="${emp.fullName}"></td>
+            <td th:text="${emp.specialization}"></td>
+            <td th:text="${emp.salon != null ? emp.salon.name : '—'}"></td>
+            <td>
+                <div th:if="${emp.workingHours != null && !#lists.isEmpty(emp.workingHours)}" style="font-size: 0.85em; line-height: 1.4;">
+                    <div th:each="hours : ${emp.workingHours}"
+                         th:if="${!hours.isClosed}"
+                         th:text="${hours.dayOfWeek + ': ' + #temporals.format(hours.startTime, 'HH:mm') + ' - ' + #temporals.format(hours.endTime, 'HH:mm')}"
+                         style="margin: 1px 0;"></div>
+                    <div th:each="hours : ${emp.workingHours}"
+                         th:if="${hours.isClosed}"
+                         th:text="${hours.dayOfWeek + ': Closed'}"
+                         style="margin: 1px 0; color: #999; font-style: italic;"></div>
+                </div>
+                <span th:if="${emp.workingHours == null || #lists.isEmpty(emp.workingHours)}" style="color: #999; font-style: italic;">
                 Not set
             </span>
-        </td>
-        <td>
-            <span th:if="${#lists.isEmpty(emp.skills)}">—</span>
-            <span th:unless="${#lists.isEmpty(emp.skills)}"
-                  th:text="${#strings.listJoin(emp.skills.?[true].![name], ', ')}"></span>
-        </td>
-        <td>
-            <a th:href="@{'/employees/delete/' + ${emp.id}}"
-               onclick="return confirm('Are you sure you want to delete this employee?');"
-               style="color: red;">Delete</a>
-        </td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(employees)}">
-        <td colspan="7" style="text-align: center; padding: 20px; color: #666;">
-            No employees found. <a th:href="@{/employees/new}">Add your first employee</a>
-        </td>
-    </tr>
-</table>
+            </td>
+            <td>
+                <span th:if="${#lists.isEmpty(emp.skills)}">—</span>
+                <span th:unless="${#lists.isEmpty(emp.skills)}"
+                      th:text="${#strings.listJoin(emp.skills.?[true].![name], ', ')}"></span>
+            </td>
+            <td>
+                <a th:href="@{'/employees/delete/' + ${emp.id}}"
+                   onclick="return confirm('Are you sure you want to delete this employee?');"
+                   class="btn btn-danger">Delete</a>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(employees)}">
+            <td colspan="7" class="empty-state">
+                No employees found. <a th:href="@{/employees/new}">Add your first employee</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 </body>
 </html>

@@ -2,29 +2,34 @@
 <html xmlns:th="http://www.thymeleaf.org" lang="en">
 <head>
     <title>Create New Account</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
 </head>
 <body>
-<h2>Register as New Customer</h2>
+<div class="container">
+    <h1>Register as New Customer</h1>
 
-<form th:action="@{/register}" th:object="${customer}" method="post">
-    <label>Full Name:</label>
-    <input type="text" th:field="*{fullName}" required><br>
+    <form th:action="@{/register}" th:object="${customer}" method="post">
+        <label>Full Name:</label>
+        <input type="text" th:field="*{fullName}" required>
 
-    <label>Email:</label>
-    <input type="email" th:field="*{email}" required><br>
+        <label>Email:</label>
+        <input type="email" th:field="*{email}" required>
 
-    <label>Username:</label>
-    <input type="text" th:field="*{username}" required><br>
+        <label>Username:</label>
+        <input type="text" th:field="*{username}" required>
 
-    <label>Password:</label>
-    <input type="password" th:field="*{password}" required><br>
+        <label>Password:</label>
+        <input type="password" th:field="*{password}" required>
 
-    <label>Phone:</label>
-    <input type="text" th:field="*{phone}" required><br>
+        <label>Phone:</label>
+        <input type="text" th:field="*{phone}" required>
 
-    <button type="submit">Register</button>
-</form>
+        <button type="submit">Register</button>
+    </form>
 
-<a th:href="@{/login}">⬅ Back to Login</a>
+    <div class="text-center mt-20">
+        <a th:href="@{/login}" class="btn btn-secondary">⬅ Back to Login</a>
+    </div>
+</div>
 </body>
 </html>

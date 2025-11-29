@@ -3,94 +3,92 @@
 <head>
     <title>Appointments</title>
     <link rel="stylesheet" th:href="@{/css/style.css}">
-    <style>
-        .status-pending { color: #856404; background-color: #fff3cd; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-        .status-confirmed { color: #155724; background-color: #d4edda; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-        .status-cancelled { color: #721c24; background-color: #f8d7da; padding: 4px 8px; border-radius: 4px; font-weight: bold; }
-        .approval-buttons { display: inline-flex; gap: 5px; }
-        .btn-approve { background-color: #28a745; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }
-        .btn-cancel { background-color: #dc3545; color: white; padding: 5px 10px; text-decoration: none; border-radius: 4px; border: none; cursor: pointer; }
-        .btn-approve:hover { background-color: #218838; }
-        .btn-cancel:hover { background-color: #c82333; }
-    </style>
 </head>
 <body>
-<h1>Appointments</h1>
+<div class="container">
+    <h1>Appointments</h1>
 
-<div th:if="${success}" style="color: green; padding: 10px; background-color: #d4edda; border: 1px solid #c3e6cb; margin-bottom: 10px; border-radius: 4px;">
-    <strong>Success:</strong> <span th:text="${success}"></span>
-</div>
+    <div th:if="${success}" class="alert alert-success">
+        <strong>Success:</strong> <span th:text="${success}"></span>
+    </div>
 
-<div th:if="${error}" style="color: red; padding: 10px; background-color: #f8d7da; border: 1px solid #f5c6cb; margin-bottom: 10px; border-radius: 4px;">
-    <strong>Error:</strong> <span th:text="${error}"></span>
-</div>
+    <div th:if="${error}" class="alert alert-error">
+        <strong>Error:</strong> <span th:text="${error}"></span>
+    </div>
 
-<p th:if="${userRole}" style="color: #666; font-style: italic;">
-    Viewing as: <strong th:text="${userRole}"></strong>
-    <span th:if="${canApprove}"> - You can approve appointments</span>
-</p>
+    <p th:if="${userRole}" class="text-muted">
+        Viewing as: <strong th:text="${userRole}"></strong>
+        <span th:if="${canApprove}"> - You can approve appointments</span>
+    </p>
 
-<div style="margin-bottom: 15px;">
-    <a th:href="@{/}">Home</a> |
-    <a th:href="@{/appointments/new}">Add Appointment</a>
-</div>
+    <nav>
+        <a th:href="@{/}">Home</a>
+        <a th:href="@{/appointments/new}">Add Appointment</a>
+    </nav>
 
-<table border="1" style="margin-top: 20px; border-collapse: collapse; width: 100%;">
-    <tr style="background-color: #f2f2f2;">
-        <th>ID</th>
-        <th>Customer</th>
-        <th>Employee</th>
-        <th>Service</th>
-        <th>Date/Time</th>
-        <th>Status</th>
-        <th>Actions</th>
-    </tr>
-    <tr th:each="a : ${appointments}">
-        <td th:text="${a.id}"></td>
-        <td th:text="${a.customer.fullName}"></td>
-        <td th:text="${a.employee.fullName}"></td>
-        <td>
-            <strong th:text="${a.service.name}"></strong><br>
-            <small style="color: #666;">
-                <span th:text="${a.service.duration} + ' min'"></span> |
-                <span th:text="'$' + ${#numbers.formatDecimal(a.service.price, 1, 2)}"></span>
-            </small>
-        </td>
-        <td th:text="${#temporals.format(a.dateTime, 'yyyy-MM-dd HH:mm')}"></td>
-        <td>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Customer</th>
+            <th>Employee</th>
+            <th>Service</th>
+            <th>Date/Time</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="a : ${appointments}">
+            <td th:text="${a.id}"></td>
+            <td th:text="${a.customer.fullName}"></td>
+            <td th:text="${a.employee.fullName}"></td>
+            <td>
+                <strong th:text="${a.service.name}"></strong><br>
+                <small style="color: #666;">
+                    <span th:text="${a.service.duration} + ' min'"></span> |
+                    <span th:text="'$' + ${#numbers.formatDecimal(a.service.price, 1, 2)}"></span>
+                </small>
+            </td>
+            <td th:text="${#temporals.format(a.dateTime, 'yyyy-MM-dd HH:mm')}"></td>
+            <td>
             <span th:class="${a.status.name() == 'PENDING'} ? 'status-pending' :
                             (${a.status.name() == 'CONFIRMED'} ? 'status-confirmed' : 'status-cancelled')"
                   th:text="${a.status}"></span>
-        </td>
-        <td>
-            <div th:if="${canApprove && a.status.name() == 'PENDING'}" class="approval-buttons">
-                <form th:action="@{'/appointments/' + ${a.id} + '/status'}" method="post" style="display: inline;">
-                    <input type="hidden" name="status" value="CONFIRMED">
-                    <button type="submit" class="btn-approve" onclick="return confirm('Confirm this appointment?');">Approve</button>
-                </form>
-                <form th:action="@{'/appointments/' + ${a.id} + '/status'}" method="post" style="display: inline;">
-                    <input type="hidden" name="status" value="CANCELLED">
-                    <button type="submit" class="btn-cancel" onclick="return confirm('Cancel this appointment?');">Cancel</button>
-                </form>
-            </div>
-            <div th:if="${canApprove && a.status.name() != 'PENDING'}">
-                <form th:action="@{'/appointments/' + ${a.id} + '/status'}" method="post" style="display: inline;">
-                    <input type="hidden" name="status" th:value="${a.status.name() == 'CONFIRMED'} ? 'CANCELLED' : 'CONFIRMED'">
-                    <button type="submit" class="btn-cancel"
-                            th:text="${a.status.name() == 'CONFIRMED'} ? 'Cancel' : 'Re-activate'"
-                            onclick="return confirm('Change appointment status?');"></button>
-                </form>
-            </div>
-            <a th:href="@{'/appointments/delete/' + ${a.id}}"
-               onclick="return confirm('Are you sure you want to delete this appointment?');"
-               style="color: red; margin-left: 5px;">Delete</a>
-        </td>
-    </tr>
-    <tr th:if="${#lists.isEmpty(appointments)}">
-        <td colspan="7" style="text-align: center; padding: 20px; color: #666;">
-            No appointments found.
-        </td>
-    </tr>
-</table>
+            </td>
+            <td>
+                <div class="action-buttons-container">
+                    <div th:if="${canApprove && a.status.name() == 'PENDING'}" class="approval-buttons">
+                        <form th:action="@{'/appointments/' + ${a.id} + '/status'}" method="post">
+                            <input type="hidden" name="status" value="CONFIRMED">
+                            <button type="submit" class="btn-approve" onclick="return confirm('Confirm this appointment?');">Approve</button>
+                        </form>
+                        <form th:action="@{'/appointments/' + ${a.id} + '/status'}" method="post">
+                            <input type="hidden" name="status" value="CANCELLED">
+                            <button type="submit" class="btn-cancel" onclick="return confirm('Cancel this appointment?');">Cancel</button>
+                        </form>
+                    </div>
+                    <div th:if="${canApprove && a.status.name() != 'PENDING'}">
+                        <form th:action="@{'/appointments/' + ${a.id} + '/status'}" method="post" style="display: inline-block;">
+                            <input type="hidden" name="status" th:value="${a.status.name() == 'CONFIRMED'} ? 'CANCELLED' : 'CONFIRMED'">
+                            <button type="submit" class="btn-cancel"
+                                    th:text="${a.status.name() == 'CONFIRMED'} ? 'Cancel' : 'Re-activate'"
+                                    onclick="return confirm('Change appointment status?');"></button>
+                        </form>
+                    </div>
+                    <a th:href="@{'/appointments/delete/' + ${a.id}}"
+                       onclick="return confirm('Are you sure you want to delete this appointment?');"
+                       class="btn btn-danger">Delete</a>
+                </div>
+            </td>
+        </tr>
+        <tr th:if="${#lists.isEmpty(appointments)}">
+            <td colspan="7" class="empty-state">
+                No appointments found.
+            </td>
+        </tr>
+        </tbody>
+    </table>
+</div>
 </body>
 </html>

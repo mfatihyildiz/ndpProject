@@ -1,76 +1,82 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
-<head><title>Add Appointment</title></head>
+<head>
+    <title>Add Appointment</title>
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
 <body>
-<h1>New Appointment</h1>
-<form th:action="@{/appointments/save}" method="post">
-    <label>Customer:</label>
-    <div th:if="${isCustomer}">
-        <input type="hidden" name="customerId" th:value="${selectedCustomerId}">
-        <p style="padding: 8px; background-color: #e9ecef; border-radius: 4px; display: inline-block;">
-            <strong th:text="${customers[0].fullName}"></strong> (You)
-        </p>
-    </div>
-    <select th:if="${!isCustomer}" name="customerId" required>
-        <option value="">-- Select Customer --</option>
-        <option th:each="c : ${customers}" th:value="${c.id}" th:text="${c.fullName}"></option>
-    </select>
-    <br>
+<div class="container">
+    <h1>New Appointment</h1>
+    <nav>
+        <a th:href="@{/appointments}">Back to Appointments</a>
+    </nav>
+    <form th:action="@{/appointments/save}" method="post">
+        <label>Customer:</label>
+        <div th:if="${isCustomer}">
+            <input type="hidden" name="customerId" th:value="${selectedCustomerId}">
+            <p style="padding: 8px; background-color: #e9ecef; border-radius: 4px; display: inline-block;">
+                <strong th:text="${customers[0].fullName}"></strong> (You)
+            </p>
+        </div>
+        <select th:if="${!isCustomer}" name="customerId" required>
+            <option value="">-- Select Customer --</option>
+            <option th:each="c : ${customers}" th:value="${c.id}" th:text="${c.fullName}"></option>
+        </select>
+        <br>
 
-    <label>Salon:</label>
-    <select id="salonSelect" name="salonId" required>
-        <option value="">-- Select Salon --</option>
-        <option th:each="salon : ${salons}" th:value="${salon.id}" th:text="${salon.name}"></option>
-    </select><br>
+        <label>Salon:</label>
+        <select id="salonSelect" name="salonId" required>
+            <option value="">-- Select Salon --</option>
+            <option th:each="salon : ${salons}" th:value="${salon.id}" th:text="${salon.name}"></option>
+        </select><br>
 
-    <label>Employee:</label>
-    <select name="employeeId" id="employeeSelect" required disabled>
-        <option value="">-- Select Employee --</option>
-        <option th:each="e : ${employees}"
-                th:value="${e.id}"
-                th:text="${e.fullName + ' (' + e.specialization + ')'}"
-                th:attr="data-salon=${e.salon != null ? e.salon.id : ''},
+        <label>Employee:</label>
+        <select name="employeeId" id="employeeSelect" required disabled>
+            <option value="">-- Select Employee --</option>
+            <option th:each="e : ${employees}"
+                    th:value="${e.id}"
+                    th:text="${e.fullName + ' (' + e.specialization + ')'}"
+                    th:attr="data-salon=${e.salon != null ? e.salon.id : ''},
                          data-skills=${#strings.listJoin(e.skills.?[true].![id], ',')},
                          data-availability=${employeeAvailability[e.id]}"></option>
-    </select>
-    <p><small>Pick a salon first to see available employees.</small></p>
-    <br>
-    <label>Service:</label>
-    <select name="serviceId" id="serviceSelect" required disabled onchange="updateServiceDetails(); updateAvailableSlots();">
-        <option value="">-- Select Service --</option>
-        <option th:each="s : ${services}"
-                th:value="${s.id}"
-                th:text="${s.name}"
-                th:attr="data-salon=${s.salon != null ? s.salon.id : ''},
+        </select>
+        <p><small>Pick a salon first to see available employees.</small></p>
+        <br>
+        <label>Service:</label>
+        <select name="serviceId" id="serviceSelect" required disabled onchange="updateServiceDetails(); updateAvailableSlots();">
+            <option value="">-- Select Service --</option>
+            <option th:each="s : ${services}"
+                    th:value="${s.id}"
+                    th:text="${s.name}"
+                    th:attr="data-salon=${s.salon != null ? s.salon.id : ''},
                          data-duration=${s.duration},
                          data-price=${s.price}"></option>
-    </select><br>
+        </select><br>
 
-    <div id="serviceDetails" style="border: 1px solid #ddd; padding: 10px; margin: 10px 0; background-color: #f9f9f9; border-radius: 4px; display: none;">
-        <strong>Service Details:</strong>
-        <p id="serviceDetailsText" style="margin: 5px 0;"></p>
-    </div>
+        <div id="serviceDetails" style="border: 1px solid #ddd; padding: 10px; margin: 10px 0; background-color: #f9f9f9; border-radius: 4px; display: none;">
+            <strong>Service Details:</strong>
+            <p id="serviceDetailsText" style="margin: 5px 0;"></p>
+        </div>
 
 
-    <div id="availabilityInfo" style="border:1px solid #ccc;padding:10px;margin-bottom:15px;">
-        <strong>Available Time Slots:</strong>
-        <p id="availabilityText">Select an employee, service, and date to see available time slots.</p>
-        <div id="availableSlotsList" style="margin-top: 10px;"></div>
-    </div>
+        <div id="availabilityInfo" style="border:1px solid #ccc;padding:10px;margin-bottom:15px;">
+            <strong>Available Time Slots:</strong>
+            <p id="availabilityText">Select an employee, service, and date to see available time slots.</p>
+            <div id="availableSlotsList" style="margin-top: 10px;"></div>
+        </div>
 
-    <label>Date:</label>
-    <input type="date" id="appointmentDate" name="appointmentDate" required onchange="updateAvailableSlots()"><br>
+        <label>Date:</label>
+        <input type="date" id="appointmentDate" name="appointmentDate" required onchange="updateAvailableSlots()"><br>
 
-    <label>Time:</label>
-    <select id="appointmentTime" name="appointmentTime" required disabled>
-        <option value="">-- Select a time slot --</option>
-    </select>
-    <input type="hidden" id="dateTime" name="dateTime" required><br>
+        <label>Time:</label>
+        <select id="appointmentTime" name="appointmentTime" required disabled>
+            <option value="">-- Select a time slot --</option>
+        </select>
+        <input type="hidden" id="dateTime" name="dateTime" required><br>
 
-    <button type="submit">Save Appointment</button>
-</form>
-
-<a th:href="@{/appointments}">Back</a>
+        <button type="submit">Save Appointment</button>
+    </form>
+</div>
 
 <script>
     const salonSelect = document.getElementById('salonSelect');
